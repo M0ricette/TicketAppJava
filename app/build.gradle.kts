@@ -1,7 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
 }
+
+
 
 android {
     namespace = "com.example.approdrigue"
@@ -34,11 +37,24 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        compose = true
         viewBinding = true
     }
+
+
 }
 
 dependencies {
+    implementation ("androidx.compose.ui:ui:1.5.3")
+    implementation ("androidx.compose.material3:material3:1.1.2")
+    implementation ("androidx.compose.ui:ui-tooling-preview:1.5.3")
+    implementation ("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.compose.ui:ui-tooling:1.5.3")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.5.3")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.3")
+    implementation("androidx.compose.runtime:runtime:1.5.3")
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
