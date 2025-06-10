@@ -1,6 +1,6 @@
 package com.example.approdrigue.ui.theme
 
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color // This is the import that needs to be resolved
 
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
