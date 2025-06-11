@@ -39,6 +39,12 @@ public class AuthService {
                     .apply();
         }
     }
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit()
+                .putString(KEY_ACCESS, accessToken)
+                .putString(KEY_ID, idToken)
+                .apply();
+    }
 
     /** Load tokens on startup. */
     public static TokenPair loadTokens(Context context) {
@@ -62,6 +68,9 @@ public class AuthService {
             accessToken = prefs.getString(KEY_ACCESS, null);
             idToken = prefs.getString(KEY_ID, null);
         }
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        String accessToken = prefs.getString(KEY_ACCESS, null);
+        String idToken = prefs.getString(KEY_ID, null);
         return new TokenPair(accessToken, idToken);
     }
 
@@ -83,6 +92,9 @@ public class AuthService {
             SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
             prefs.edit().remove(KEY_ACCESS).remove(KEY_ID).apply();
         }
+    }
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().remove(KEY_ACCESS).remove(KEY_ID).apply();
     }
 
     /** Simple holder for a pair of tokens. */
