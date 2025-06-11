@@ -1,0 +1,22 @@
+{
+  "auth": {
+    "plugins": {
+      "awsCognitoAuthPlugin": {
+        "CognitoUserPool": {
+          "Default": {
+            "PoolId": "eu-north-1_rwmeq3koR",
+            "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
+            "Region": "eu-north-1"
+          }
+        },
+        "OAuth": {
+          "WebDomain": "ticketapp.auth.eu-north-1.amazoncognito.com",
+          "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
+          "SignInRedirectURI": "com.ticketapp://callback",
+          "SignOutRedirectURI": "com.ticketapp://callback",
+          "Scopes": ["openid", "email", "phone"]
+        }
+      }
+    }
+  }
+}
