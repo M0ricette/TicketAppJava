@@ -2,7 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 
-}
+        // Jetpack Security's crypto library requires API 23 or higher
+        // Adjust the minimum SDK accordingly to avoid AAR metadata errors
+        minSdk = 23
 
 
 
