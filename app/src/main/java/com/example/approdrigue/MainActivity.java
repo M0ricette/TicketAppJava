@@ -9,9 +9,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 
-
 import com.amplifyframework.auth.result.AuthSignOutResult;
 import com.amplifyframework.auth.options.AuthSignOutOptions;
+import com.amplifyframework.auth.options.AuthWebUISignInOptions;
+import com.amplifyframework.auth.cognito.result.AWSCognitoAuthSignOutResult;
+
+
+
+
+
 
 import androidx.appcompat.app.AppCompatActivity;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
@@ -46,6 +52,14 @@ public class MainActivity extends AppCompatActivity {
 
         // 2️⃣ Ensuite seulement, tu peux appeler Amplify.Auth.signInWithWebUI(...)
         btnLogin = findViewById(R.id.btnLogin);
+        btnLogout = findViewById(R.id.btnLogout);
+        btnValidate = findViewById(R.id.btnValidate);
+        btnCheck = findViewById(R.id.btnCheck);
+        editCode = findViewById(R.id.editCode);
+        textVenue = findViewById(R.id.textVenue);
+        textResult = findViewById(R.id.textResult);
+        viewStatus = findViewById(R.id.viewStatus);
+
         btnLogin.setOnClickListener(v -> {
             Log.i("AmplifyDebug", "Lancement de signInWithWebUI");
             Amplify.Auth.signInWithWebUI(
@@ -74,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     private void login() {
         Amplify.Auth.signInWithWebUI(
                 this,
-                AuthSignInWithWebUIOptions.builder().build(),
+                AuthWebUISignInOptions.builder().build(),
                 result -> {
                     Log.i("AuthQuickStart", "signInWithWebUI OK");
                     fetchSessionAndStore();
@@ -112,25 +126,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void logout() {
-        Amplify.Auth.signOut(
-                AuthSignOutOptions.builder().globalSignOut(true).build(),
-                res -> {
-                    if (res.isSignOutComplete()) {
-                        runOnUiThread(() -> {
-                            textResult.setText("Déconnecté");
-                            AuthService.deleteTokens(this);
-                            idToken = null;
-                            btnLogout.setVisibility(View.GONE);
-                            viewStatus.setBackgroundColor(0xFFCCCCCC);
-                        });
-                    }
-                },
-                error -> {
-                    Log.e("AuthQuickStart", "signOut ÉCHEC", error);
-                    runOnUiThread(() -> textResult.setText("Erreur déconnexion"));
-                }
-        );
+        Amplify.Auth.signOut(result -> {
+            if (result instanceof AWSCognitoAuthSignOutResult.CompleteSignOut) {
+                runOnUiThread(() -> textResult.setText("Déconnecté"));
+            } else if (result instanceof AWSCognitoAuthSignOutResult.PartialSignOut) {
+                runOnUiThread(() -> textResult.setText("Déconnexion partielle"));
+            } else if (result instanceof AWSCognitoAuthSignOutResult.FailedSignOut) {
+                runOnUiThread(() -> textResult.setText("Échec déconnexion"));
+            }
+        });
     }
+
+
+
 
 
 
