@@ -2,32 +2,29 @@ package com.example.approdrigue;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.util.Log;
+
+
+
+import com.amplifyframework.auth.result.AuthSignOutResult;
+import com.amplifyframework.auth.options.AuthSignOutOptions;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.amplifyframework.core.Amplify;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
+import com.amplifyframework.core.Amplify;
 
 import org.json.JSONObject;
 
-/**
- * Basic UI to interact with the ticket API.
- */
 public class MainActivity extends AppCompatActivity {
 
-    private Button btnLogin;
-    private Button btnLogout;
-    private Button btnCheck;
-    private Button btnValidate;
+    private Button btnLogin, btnLogout, btnCheck, btnValidate;
     private EditText editCode;
-    private TextView textVenue;
-    private TextView textResult;
+    private TextView textVenue, textResult;
     private View viewStatus;
 
     private String idToken;
@@ -38,29 +35,29 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 1️⃣ Initialise Amplify AVANT tout appel à Amplify.Auth
         try {
             Amplify.addPlugin(new AWSCognitoAuthPlugin());
             Amplify.configure(getApplicationContext());
+            Log.i("AmplifyDebug", "✅ Amplify configuré");
         } catch (Exception e) {
-            Log.e("MainActivity", "Amplify init failed", e);
+            Log.e("AmplifyDebug", "❌ Échec de la configuration Amplify", e);
         }
 
+        // 2️⃣ Ensuite seulement, tu peux appeler Amplify.Auth.signInWithWebUI(...)
         btnLogin = findViewById(R.id.btnLogin);
-        btnLogout = findViewById(R.id.btnLogout);
-        btnCheck = findViewById(R.id.btnCheck);
-        btnValidate = findViewById(R.id.btnValidate);
-        editCode = findViewById(R.id.editCode);
-        textVenue = findViewById(R.id.textVenue);
-        textResult = findViewById(R.id.textResult);
-        viewStatus = findViewById(R.id.viewStatus);
+        btnLogin.setOnClickListener(v -> {
+            Log.i("AmplifyDebug", "Lancement de signInWithWebUI");
+            Amplify.Auth.signInWithWebUI(
+                    this,
+                    result -> { /* … */ },
+                    error  -> { /* … */ }
+            );
+        });
 
-        loadTokens();
-
-        btnLogin.setOnClickListener(v -> login());
-        btnLogout.setOnClickListener(v -> logout());
-        btnCheck.setOnClickListener(v -> fetchTicket());
-        btnValidate.setOnClickListener(v -> validateTicket());
+        // (le reste de ton onCreate…)
     }
+
 
     private void loadTokens() {
         AuthService.TokenPair pair = AuthService.loadTokens(this);
@@ -69,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
             btnLogout.setVisibility(View.VISIBLE);
             fetchVenue();
         } else if (idToken != null) {
-            // Token expired, clear it
             AuthService.deleteTokens(this);
             idToken = null;
         }
@@ -78,30 +74,34 @@ public class MainActivity extends AppCompatActivity {
     private void login() {
         Amplify.Auth.signInWithWebUI(
                 this,
+                AuthSignInWithWebUIOptions.builder().build(),
                 result -> {
+                    Log.i("AuthQuickStart", "signInWithWebUI OK");
                     fetchSessionAndStore();
                     runOnUiThread(() -> textResult.setText("Connecté"));
                 },
-                error -> runOnUiThread(() -> textResult.setText("Erreur: " + error.getMessage()))
+                error -> {
+                    Log.e("AuthQuickStart", "signInWithWebUI ÉCHEC", error);
+                    runOnUiThread(() -> textResult.setText("Erreur: " + error.getMessage()));
+                }
         );
     }
 
+
     private void fetchSessionAndStore() {
         Amplify.Auth.fetchAuthSession(
-                session -> {
-                    AWSCognitoAuthSession cognito = (AWSCognitoAuthSession) session;
-                    if (cognito.isSignedIn()) {
-                        String access = cognito.getUserPoolTokens().getAccessToken();
-                        String id = cognito.getUserPoolTokens().getIdToken();
-                        AuthService.saveTokens(this, access, id);
-                        idToken = id;
-                        try {
-                            JSONObject claims = JwtUtils.decodePayload(id);
-                            Log.i("MainActivity", "JWT claims: " + claims.toString());
-                        } catch (Exception e) {
-                            Log.w("MainActivity", "Failed to decode token", e);
-                        }
+                result -> {
+                    if (result.isSignedIn() && result instanceof AWSCognitoAuthSession) {
+                        AWSCognitoAuthSession cognito = (AWSCognitoAuthSession) result;
+
+                        String idToken = cognito.getUserPoolTokensResult().getValue().getIdToken();
+                        String accessToken = cognito.getUserPoolTokensResult().getValue().getAccessToken();
+
+                        AuthService.saveTokens(this, accessToken, idToken);
+                        this.idToken = idToken;
+
                         runOnUiThread(() -> {
+                            textResult.setText("Connecté");
                             btnLogout.setVisibility(View.VISIBLE);
                             fetchVenue();
                         });
@@ -113,32 +113,53 @@ public class MainActivity extends AppCompatActivity {
 
     private void logout() {
         Amplify.Auth.signOut(
-                () -> runOnUiThread(() -> textResult.setText("Déconnecté")),
-                error -> runOnUiThread(() -> textResult.setText("Erreur: " + error.getMessage()))
+                AuthSignOutOptions.builder().globalSignOut(true).build(),
+                res -> {
+                    if (res.isSignOutComplete()) {
+                        runOnUiThread(() -> {
+                            textResult.setText("Déconnecté");
+                            AuthService.deleteTokens(this);
+                            idToken = null;
+                            btnLogout.setVisibility(View.GONE);
+                            viewStatus.setBackgroundColor(0xFFCCCCCC);
+                        });
+                    }
+                },
+                error -> {
+                    Log.e("AuthQuickStart", "signOut ÉCHEC", error);
+                    runOnUiThread(() -> textResult.setText("Erreur déconnexion"));
+                }
         );
-        AuthService.deleteTokens(this);
-        idToken = null;
-        btnLogout.setVisibility(View.GONE);
-        viewStatus.setBackgroundColor(0xFFCCCCCC);
     }
+
+
+
+
+
 
     private void fetchVenue() {
         if (idToken == null || JwtUtils.isTokenExpired(idToken)) {
-            textResult.setText("Token expiré, veuillez vous reconnecter");
+            runOnUiThread(() -> textResult.setText("Token expiré, veuillez vous reconnecter"));
             return;
         }
-        new AsyncTask<Void,Void,JSONObject>(){
+        new AsyncTask<Void, Void, JSONObject>() {
             Exception error;
-            @Override protected JSONObject doInBackground(Void... voids) {
+            @Override
+            protected JSONObject doInBackground(Void... voids) {
                 try {
                     return TicketApi.fetchVenueConfig(idToken);
-                } catch (Exception e) { error = e; return null; }
+                } catch (Exception e) {
+                    error = e;
+                    return null;
+                }
             }
-            @Override protected void onPostExecute(JSONObject result) {
+
+            @Override
+            protected void onPostExecute(JSONObject result) {
                 if (result != null) {
-                    textVenue.setText("Salle: "+result.optString("venue_id"));
+                    textVenue.setText("Salle: " + result.optString("venue_id"));
                 } else {
-                    textResult.setText("Erreur: "+error);
+                    textResult.setText("Erreur: " + error);
                 }
             }
         }.execute();
@@ -150,24 +171,31 @@ public class MainActivity extends AppCompatActivity {
             textResult.setText("Token expiré, veuillez vous reconnecter");
             return;
         }
-        new AsyncTask<Void,Void,JSONObject>(){
+        new AsyncTask<Void, Void, JSONObject>() {
             Exception error;
-            @Override protected JSONObject doInBackground(Void... voids) {
+
+            @Override
+            protected JSONObject doInBackground(Void... voids) {
                 try {
                     return TicketApi.fetchTicket(idToken, code);
-                } catch (Exception e) { error = e; return null; }
+                } catch (Exception e) {
+                    error = e;
+                    return null;
+                }
             }
-            @Override protected void onPostExecute(JSONObject result) {
+
+            @Override
+            protected void onPostExecute(JSONObject result) {
                 if (result != null) {
-                    int statut = result.optInt("statut", 1);
-                    boolean used = result.optBoolean("utilisé", false);
-                    ticketValid = (statut == 0 && !used);
+                    int status = result.optInt("status", 1);
+                    boolean used = result.optBoolean("used", false);
+                    ticketValid = (status == 0 && !used);
                     String codeQR = result.optString("n_tickets", code);
-                    textResult.setText("Ticket: "+codeQR+"\n"+(ticketValid?"TICKET VALIDE":"TICKET INVALIDE"));
+                    textResult.setText("Ticket: " + codeQR + "\n" + (ticketValid ? "TICKET VALIDE" : "TICKET INVALIDE"));
                     btnValidate.setVisibility(ticketValid ? View.VISIBLE : View.GONE);
                     viewStatus.setBackgroundColor(ticketValid ? 0xFF00AA00 : 0xFFAA0000);
                 } else {
-                    textResult.setText("Erreur: "+error);
+                    textResult.setText("Erreur: " + error);
                 }
             }
         }.execute();
@@ -179,20 +207,26 @@ public class MainActivity extends AppCompatActivity {
             textResult.setText("Token expiré, veuillez vous reconnecter");
             return;
         }
-        new AsyncTask<Void,Void,JSONObject>(){
+        new AsyncTask<Void, Void, JSONObject>() {
             Exception error;
-            @Override protected JSONObject doInBackground(Void... voids) {
+            @Override
+            protected JSONObject doInBackground(Void... voids) {
                 try {
                     return TicketApi.confirmValidation(idToken, code);
-                } catch (Exception e) { error = e; return null; }
+                } catch (Exception e) {
+                    error = e;
+                    return null;
+                }
             }
-            @Override protected void onPostExecute(JSONObject result) {
+
+            @Override
+            protected void onPostExecute(JSONObject result) {
                 if (result != null) {
-                    textResult.append("\nValidé à: "+result.optString("timestamp"));
-                    viewStatus.setBackgroundColor(0xFFAA0000);
+                    textResult.append("\nValidé à: " + result.optString("timestamp"));
+                    viewStatus.setBackgroundColor(0xFF00AA00);
                     btnValidate.setVisibility(View.GONE);
                 } else {
-                    textResult.setText("Erreur: "+error);
+                    textResult.setText("Erreur: " + error);
                 }
             }
         }.execute();

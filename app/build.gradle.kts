@@ -1,12 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
-    // Jetpack Security's crypto library requires API 23 or higher
-    // Adjust the minimum SDK accordingly to avoid AAR metadata errors
 }
-
-
 
 android {
     namespace = "com.example.approdrigue"
@@ -14,59 +9,42 @@ android {
 
     defaultConfig {
         applicationId = "com.example.approdrigue"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "11"
     }
     buildFeatures {
         viewBinding = true
-        // Explicitly disable Compose to avoid requesting the Compose compiler
         compose = false
-
     }
-
-
 }
 
 dependencies {
-    implementation ("androidx.compose.ui:ui:1.5.3")
-    implementation ("androidx.compose.material3:material3:1.1.2")
-    implementation ("androidx.compose.ui:ui-tooling-preview:1.5.3")
-    implementation ("androidx.activity:activity-compose:1.7.2")
-    implementation("androidx.compose.ui:ui-tooling:1.5.3")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.5.3")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.3")
-    implementation("androidx.compose.runtime:runtime:1.5.3")
-
-
-
+    // AndroidX
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.security.crypto)
-    implementation(libs.amplify.core)
-    implementation(libs.amplify.auth.cognito)
-    implementation(libs.androidx.appcompat)
+
+    // AWS Amplify – Core + Cognito Auth plugin
+    implementation("com.amplifyframework:core:2.27.4")              // :contentReference[oaicite:0]{index=0}
+    implementation("com.amplifyframework:aws-auth-cognito:2.27.4") // :contentReference[oaicite:1]{index=1}
+
+    // Enable Java 8+ APIs in lower API levels
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("com.google.android.material:material:1.10.0")
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

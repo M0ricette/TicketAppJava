@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.AppRodrigue" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.AppRodrigue" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Vos personnalisations (couleurs, typographies…) -->
+        <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
+        <!-- Ajoutez vos items ici selon vos besoins -->
+    </style>
 </resources>

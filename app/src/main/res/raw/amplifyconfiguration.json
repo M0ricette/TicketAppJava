@@ -1,22 +1,35 @@
 {
-  "auth": {
-    "plugins": {
-      "awsCognitoAuthPlugin": {
-        "CognitoUserPool": {
-          "Default": {
-            "PoolId": "eu-north-1_rwmeq3koR",
-            "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
-            "Region": "eu-north-1"
-          }
-        },
-        "OAuth": {
-          "WebDomain": "ticketapp.auth.eu-north-1.amazoncognito.com",
-          "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
-          "SignInRedirectURI": "com.ticketapp://callback",
-          "SignOutRedirectURI": "com.ticketapp://callback",
-          "Scopes": ["openid", "email", "phone"]
+    "auth": {
+        "plugins": {
+            "awsCognitoAuthPlugin": {
+                "CognitoUserPool": {
+                    "Default": {
+                        "PoolId": "eu-north-1_rwmeq3koR",
+                        "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
+                        "Region": "eu-north-1"
+                    }
+                },
+                "CredentialsProvider": {
+                    "CognitoIdentity": {
+                        "Default": {
+                            "PoolId": "eu-north-1:b905a010-657d-41be-8fc4-7823cb491c4c",
+                            "Region": "eu-north-1"
+                        }
+                    }
+                },
+                "Auth": {
+                    "Default": {
+                        "authenticationFlowType": "USER_SRP_AUTH"
+                    }
+                },
+                "OAuth": {
+                    "WebDomain": "eu-north-1rwmeq3kor.auth.eu-north-1.amazoncognito.com",
+                    "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
+                    "SignInRedirectURI": "com.ticketapp://callback",
+                    "SignOutRedirectURI": "com.ticketapp://callback",
+                    "Scopes": ["openid","email","phone"]
+                }
+            }
         }
-      }
     }
-  }
 }
