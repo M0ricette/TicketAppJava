@@ -8,22 +8,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-
-import com.amplifyframework.auth.result.AuthSignOutResult;
-import com.amplifyframework.auth.options.AuthSignOutOptions;
-import com.amplifyframework.auth.options.AuthWebUISignInOptions;
-import com.amplifyframework.auth.cognito.result.AWSCognitoAuthSignOutResult;
-
-
-
-
-
-
 import androidx.appcompat.app.AppCompatActivity;
+import com.amplifyframework.core.AmplifyConfiguration;
+
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
+import com.amplifyframework.auth.options.AuthWebUISignInOptions;
 import com.amplifyframework.core.Amplify;
-
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,45 +35,34 @@ public class MainActivity extends AppCompatActivity {
         // 1️⃣ Initialise Amplify AVANT tout appel à Amplify.Auth
         try {
             Amplify.addPlugin(new AWSCognitoAuthPlugin());
-            Amplify.configure(getApplicationContext());
+            Amplify.configure(
+                    AmplifyConfiguration.fromConfigFile(getApplicationContext(), R.raw.amplifyconfiguration),
+                    getApplicationContext()
+            );
+
             Log.i("AmplifyDebug", "✅ Amplify configuré");
         } catch (Exception e) {
             Log.e("AmplifyDebug", "❌ Échec de la configuration Amplify", e);
         }
 
-        // 2️⃣ Ensuite seulement, tu peux appeler Amplify.Auth.signInWithWebUI(...)
-        btnLogin = findViewById(R.id.btnLogin);
-        btnLogout = findViewById(R.id.btnLogout);
-        btnValidate = findViewById(R.id.btnValidate);
-        btnCheck = findViewById(R.id.btnCheck);
-        editCode = findViewById(R.id.editCode);
-        textVenue = findViewById(R.id.textVenue);
+
+        // 2️⃣ Récupère toutes tes views
+        btnLogin   = findViewById(R.id.btnLogin);
+        btnLogout  = findViewById(R.id.btnLogout);
+        btnCheck   = findViewById(R.id.btnCheck);
+        btnValidate= findViewById(R.id.btnValidate);
+        editCode   = findViewById(R.id.editCode);
+        textVenue  = findViewById(R.id.textVenue);
         textResult = findViewById(R.id.textResult);
         viewStatus = findViewById(R.id.viewStatus);
 
+        // 3️⃣ Branche le clic sur le bouton Login pour appeler login()
         btnLogin.setOnClickListener(v -> {
-            Log.i("AmplifyDebug", "Lancement de signInWithWebUI");
-            Amplify.Auth.signInWithWebUI(
-                    this,
-                    result -> { /* … */ },
-                    error  -> { /* … */ }
-            );
+            Log.i("AmplifyDebug", "Appel de login()");
+            login();
         });
 
-        // (le reste de ton onCreate…)
-    }
-
-
-    private void loadTokens() {
-        AuthService.TokenPair pair = AuthService.loadTokens(this);
-        idToken = pair.idToken;
-        if (idToken != null && !JwtUtils.isTokenExpired(idToken)) {
-            btnLogout.setVisibility(View.VISIBLE);
-            fetchVenue();
-        } else if (idToken != null) {
-            AuthService.deleteTokens(this);
-            idToken = null;
-        }
+        // (… tu peux aussi initialiser ici tes autres listeners, par ex. btnCheck et btnValidate)
     }
 
     private void login() {
@@ -101,19 +81,15 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-
     private void fetchSessionAndStore() {
         Amplify.Auth.fetchAuthSession(
                 result -> {
                     if (result.isSignedIn() && result instanceof AWSCognitoAuthSession) {
                         AWSCognitoAuthSession cognito = (AWSCognitoAuthSession) result;
-
-                        String idToken = cognito.getUserPoolTokensResult().getValue().getIdToken();
+                        String idToken     = cognito.getUserPoolTokensResult().getValue().getIdToken();
                         String accessToken = cognito.getUserPoolTokensResult().getValue().getAccessToken();
-
                         AuthService.saveTokens(this, accessToken, idToken);
                         this.idToken = idToken;
-
                         runOnUiThread(() -> {
                             textResult.setText("Connecté");
                             btnLogout.setVisibility(View.VISIBLE);
@@ -127,23 +103,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void logout() {
         Amplify.Auth.signOut(result -> {
-            if (result instanceof AWSCognitoAuthSignOutResult.CompleteSignOut) {
+            // Ton code logout reste inchangé
+            if (result instanceof com.amplifyframework.auth.cognito.result.AWSCognitoAuthSignOutResult.CompleteSignOut) {
                 runOnUiThread(() -> textResult.setText("Déconnecté"));
-            } else if (result instanceof AWSCognitoAuthSignOutResult.PartialSignOut) {
+            } else if (result instanceof com.amplifyframework.auth.cognito.result.AWSCognitoAuthSignOutResult.PartialSignOut) {
                 runOnUiThread(() -> textResult.setText("Déconnexion partielle"));
-            } else if (result instanceof AWSCognitoAuthSignOutResult.FailedSignOut) {
+            } else if (result instanceof com.amplifyframework.auth.cognito.result.AWSCognitoAuthSignOutResult.FailedSignOut) {
                 runOnUiThread(() -> textResult.setText("Échec déconnexion"));
             }
         });
     }
-
-
-
-
-
-
-
-
 
     private void fetchVenue() {
         if (idToken == null || JwtUtils.isTokenExpired(idToken)) {
@@ -161,7 +130,6 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }
             }
-
             @Override
             protected void onPostExecute(JSONObject result) {
                 if (result != null) {
@@ -181,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
         }
         new AsyncTask<Void, Void, JSONObject>() {
             Exception error;
-
             @Override
             protected JSONObject doInBackground(Void... voids) {
                 try {
@@ -191,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }
             }
-
             @Override
             protected void onPostExecute(JSONObject result) {
                 if (result != null) {
@@ -199,7 +165,8 @@ public class MainActivity extends AppCompatActivity {
                     boolean used = result.optBoolean("used", false);
                     ticketValid = (status == 0 && !used);
                     String codeQR = result.optString("n_tickets", code);
-                    textResult.setText("Ticket: " + codeQR + "\n" + (ticketValid ? "TICKET VALIDE" : "TICKET INVALIDE"));
+                    textResult.setText("Ticket: " + codeQR + "\n" +
+                            (ticketValid ? "TICKET VALIDE" : "TICKET INVALIDE"));
                     btnValidate.setVisibility(ticketValid ? View.VISIBLE : View.GONE);
                     viewStatus.setBackgroundColor(ticketValid ? 0xFF00AA00 : 0xFFAA0000);
                 } else {
@@ -226,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }
             }
-
             @Override
             protected void onPostExecute(JSONObject result) {
                 if (result != null) {

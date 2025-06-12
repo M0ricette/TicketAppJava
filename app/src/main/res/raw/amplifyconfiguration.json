@@ -1,7 +1,12 @@
 {
+    "UserAgent": "aws-amplify-cli/2.0",
+    "Version": "1.0",
     "auth": {
         "plugins": {
             "awsCognitoAuthPlugin": {
+                "IdentityManager": {
+                    "Default": {}
+                },
                 "CognitoUserPool": {
                     "Default": {
                         "PoolId": "eu-north-1_rwmeq3koR",
@@ -25,9 +30,10 @@
                 "OAuth": {
                     "WebDomain": "eu-north-1rwmeq3kor.auth.eu-north-1.amazoncognito.com",
                     "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
-                    "SignInRedirectURI": "com.ticketapp://callback",
-                    "SignOutRedirectURI": "com.ticketapp://callback",
-                    "Scopes": ["openid","email","phone"]
+                    "SignInRedirectURI": "com.ticketapp://callback/",
+                    "SignOutRedirectURI": "com.ticketapp://callback/",
+                    "Scopes": ["openid", "email", "phone"],
+                    "responseType": "code"
                 }
             }
         }
