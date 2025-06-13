@@ -11,9 +11,10 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.amplifyframework.core.AmplifyConfiguration;
 
+import com.amplifyframework.auth.options.AuthWebUISignInOptions;
+
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin;
 import com.amplifyframework.auth.cognito.AWSCognitoAuthSession;
-import com.amplifyframework.auth.options.AuthWebUISignInOptions;
 import com.amplifyframework.core.Amplify;
 import org.json.JSONObject;
 
