@@ -1,47 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    package="com.example.approdrigue">
 
-    <!-- Permet de découvrir les navigateurs pour Custom Tabs -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.VIEW"/>
-            <data android:scheme="http"/>
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW"/>
-            <data android:scheme="https"/>
-        </intent>
-    </queries>
-
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Nécessaire pour les appels réseau -->
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
+        android:name=".App"
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.AppRodrigue"
-        tools:targetApi="31">
+        android:theme="@style/Theme.AppRodrigue">
+
+        <!-- 1) Activity pour intercepter le retour du Hosted UI Cognito -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.AppRodrigue">
+            android:name="com.amplifyframework.auth.cognito.activities.HostedUIRedirectActivity"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.ticketapp" android:host="callback" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <!-- Doit matcher exactement votre SignInRedirectURI et SignOutRedirectURI -->
+                <data
+                    android:scheme="com.example.approdrigue"
+                    android:host="callback"
+                    android:pathPrefix="/" />
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- 2) Écran de connexion (Launcher) -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- 3) Écran principal après connexion -->
+        <activity
+            android:name=".DashboardActivity"
+            android:exported="false"/>
+
+    </application>
 </manifest>

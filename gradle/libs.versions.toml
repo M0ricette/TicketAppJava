@@ -9,6 +9,9 @@ lifecycleRuntimeKtx = "2.9.0"
 appCompat = "1.6.1"
 amplify = "2.27.4"
 securityCrypto = "1.1.0-beta01"
+material = "1.12.0"
+activity = "1.10.1"
+constraintlayout = "2.2.1"
 
 
 
@@ -22,6 +25,9 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 amplify-core = { group = "com.amplifyframework", name = "core", version.ref = "amplify" }
 amplify-auth-cognito = { group = "com.amplifyframework", name = "aws-auth-cognito", version.ref = "amplify" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
 
 [plugins]

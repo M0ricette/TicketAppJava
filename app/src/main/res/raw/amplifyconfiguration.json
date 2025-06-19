@@ -1,30 +1,63 @@
 {
     "UserAgent": "aws-amplify-cli/2.0",
     "Version": "1.0",
-    "Auth": {
-        "Default": {
-            "authenticationFlowType": "USER_SRP_AUTH",
-            "OAuth": {
-                "WebDomain": "https://eu-north-1rwmeq3kor.auth.eu-north-1.amazoncognito.com",
-                "AppClientId": "6q1jnks75nbrdurnrcao3niuro",
-                "SignInRedirectURI": "com.ticketapp://callback",
-                "SignOutRedirectURI": "com.ticketapp://callback",
-                "Scopes": [
-                    "openid",
-                    "email",
-                    "phone"
-                ],
-                "responseType": "code"
-            },
-            "UserPoolId": "eu-north-1_rwmeq3koR",
-            "UserPoolClientId": "6q1jnks75nbrdurnrcao3niuro",
-            "Region": "eu-north-1",
-            "IdentityPoolId": "eu-north-1:b905a010-657d-41be-8fc4-7823cb491c4c"
-        },
+    "auth": {
         "plugins": {
             "awsCognitoAuthPlugin": {
+                "UserAgent": "aws-amplify-cli/0.1.0",
+                "Version": "0.1.0",
                 "IdentityManager": {
                     "Default": {}
+                },
+                "CredentialsProvider": {
+                    "CognitoIdentity": {
+                        "Default": {
+                            "PoolId": "eu-north-1:7a65cd6f-c202-4449-9018-175f0e776d47",
+                            "Region": "eu-north-1"
+                        }
+                    }
+                },
+                "CognitoUserPool": {
+                    "Default": {
+                        "PoolId": "eu-north-1_yYe0YvtfA",
+                        "AppClientId": "2r1epqhim7cupdd77s9ivsksd4",
+                        "Region": "eu-north-1"
+                    }
+                },
+                "Auth": {
+                    "Default": {
+                        "OAuth": {
+                            "WebDomain": "approdrigue61a89ace-61a89ace-dev.auth.eu-north-1.amazoncognito.com",
+                            "AppClientId": "2r1epqhim7cupdd77s9ivsksd4",
+                            "SignInRedirectURI": "com.example.approdrigue://callback/",
+                            "SignOutRedirectURI": "com.example.approdrigue://callback/",
+                            "Scopes": [
+                                "email",
+                                "openid",
+                                "profile",
+                                "aws.cognito.signin.user.admin"
+                            ]
+                        },
+                        "authenticationFlowType": "USER_SRP_AUTH",
+                        "socialProviders": [],
+                        "usernameAttributes": [
+                            "EMAIL"
+                        ],
+                        "signupAttributes": [
+                            "EMAIL"
+                        ],
+                        "passwordProtectionSettings": {
+                            "passwordPolicyMinLength": 8,
+                            "passwordPolicyCharacters": []
+                        },
+                        "mfaConfiguration": "OFF",
+                        "mfaTypes": [
+                            "SMS"
+                        ],
+                        "verificationMechanisms": [
+                            "EMAIL"
+                        ]
+                    }
                 }
             }
         }

@@ -1,77 +1,104 @@
 package com.example.approdrigue;
 
-import android.util.Log;
-
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
-/**
- * Minimal network layer to call the AWS endpoints.
- */
 public class TicketApi {
-    private static final String TAG = "TicketApi";
+    // Ton vrai endpoint API Gateway
+    private static final String BASE_URL =
+            "https://3jzfq2vywc.execute-api.us-east-1.amazonaws.com/TestAPI";
 
-    private static final String VENUE_CONFIG_URL = "https://ao6sidd69h.execute-api.eu-north-1.amazonaws.com/prod/venue-config";
-    private static final String TICKET_URL = "https://3jzfq2vywc.execute-api.us-east-1.amazonaws.com/TestAPI/ticket";
-    private static final String VALIDATE_URL = "https://3jzfq2vywc.execute-api.us-east-1.amazonaws.com/TestAPI/ticket/validate";
-    private static final String API_KEY = "dP9BkICR991gxbYDfEwgy6sKONdcEKxo2Tw3Uru9";
-
-    private static HttpURLConnection openConnection(String urlStr, String idToken) throws Exception {
-        URL url = new URL(urlStr);
+    public static JSONObject fetchVenueConfig(String token, String apiKey) throws Exception {
+        URL url = new URL(BASE_URL + "/ticket"); // <- /ticket, pas /venue
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
         conn.setRequestProperty("Content-Type", "application/json");
-        if (idToken != null) {
-            conn.setRequestProperty("Authorization", "Bearer " + idToken);
-        }
-        return conn;
-    }
+        conn.setRequestProperty("Authorization", "Bearer " + token);
+        conn.setRequestProperty("x-api-key", apiKey);
 
-    public static JSONObject fetchVenueConfig(String idToken) throws Exception {
-        HttpURLConnection conn = openConnection(VENUE_CONFIG_URL, idToken);
-        conn.setRequestMethod("GET");
-        return readJson(conn);
-    }
-
-    public static JSONObject fetchTicket(String idToken, String code) throws Exception {
-        String url = TICKET_URL + "?code=" + code;
-        HttpURLConnection conn = openConnection(url, idToken);
-        conn.setRequestProperty("x-api-key", API_KEY);
-        conn.setRequestMethod("GET");
-        return readJson(conn);
-    }
-
-    public static JSONObject confirmValidation(String idToken, String code) throws Exception {
-        HttpURLConnection conn = openConnection(VALIDATE_URL, idToken);
-        conn.setRequestProperty("x-api-key", API_KEY);
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-        String body = new JSONObject().put("code", code).toString();
-        try (OutputStream os = conn.getOutputStream()) {
-            os.write(body.getBytes());
-        }
-        return readJson(conn);
-    }
-
-    private static JSONObject readJson(HttpURLConnection conn) throws Exception {
         int status = conn.getResponseCode();
         BufferedReader reader = new BufferedReader(new InputStreamReader(
-                status >= 200 && status < 300 ? conn.getInputStream() : conn.getErrorStream()
-        ));
-        StringBuilder sb = new StringBuilder();
+                status < 400 ? conn.getInputStream() : conn.getErrorStream(), StandardCharsets.UTF_8));
+        StringBuilder response = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) {
-            sb.append(line);
+            response.append(line);
         }
         reader.close();
-        if (status < 200 || status >= 300) {
-            Log.e(TAG, "Request failed: " + status + " " + sb.toString());
-            throw new RuntimeException("HTTP " + status);
+        conn.disconnect();
+
+        if (status >= 200 && status < 300) {
+            return new JSONObject(response.toString());
+        } else {
+            JSONObject error = new JSONObject(response.toString());
+            throw new Exception("Request failed: " + status + " " + error.toString());
         }
-        return new JSONObject(sb.toString());
+    }
+
+    public static JSONObject fetchTicket(String token, String apiKey, String code) throws Exception {
+        String encodedCode = URLEncoder.encode(code, "UTF-8");
+        URL url = new URL(BASE_URL + "/ticket?code=" + encodedCode);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Authorization", "Bearer " + token);
+        conn.setRequestProperty("x-api-key", apiKey);
+
+        int status = conn.getResponseCode();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                status < 400 ? conn.getInputStream() : conn.getErrorStream(), StandardCharsets.UTF_8));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+        conn.disconnect();
+
+        if (status >= 200 && status < 300) {
+            return new JSONObject(response.toString());
+        } else {
+            JSONObject error = new JSONObject(response.toString());
+            throw new Exception("Request failed: " + status + " " + error.toString());
+        }
+    }
+
+    public static JSONObject confirmValidation(String token, String apiKey, String code) throws Exception {
+        URL url = new URL(BASE_URL + "/ticket/validate");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Authorization", "Bearer " + token);
+        conn.setRequestProperty("x-api-key", apiKey);
+        conn.setDoOutput(true);
+
+        String payload = new JSONObject().put("code", code).toString();
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(payload.getBytes(StandardCharsets.UTF_8));
+        }
+
+        int status = conn.getResponseCode();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                status < 400 ? conn.getInputStream() : conn.getErrorStream(), StandardCharsets.UTF_8));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+        conn.disconnect();
+
+        if (status >= 200 && status < 300) {
+            return new JSONObject(response.toString());
+        } else {
+            JSONObject error = new JSONObject(response.toString());
+            throw new Exception("Request failed: " + status + " " + error.toString());
+        }
     }
 }
