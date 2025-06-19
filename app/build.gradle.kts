@@ -1,3 +1,7 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,6 +21,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "API_KEY", "\"${getApiKey()}\"")
     }
 
     compileOptions {
@@ -31,7 +37,8 @@ android {
 
     buildFeatures {
         viewBinding = true
-        compose = false // Ou true si vous utilisez Compose
+        compose = false
+        buildConfig = true
     }
 }
 
@@ -73,4 +80,20 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
+
+
+
+
+fun getApiKey(): String {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        val props = Properties()
+        props.load(FileInputStream(localPropertiesFile))
+        return props.getProperty("API_KEY") ?: ""
+    }
+    return System.getenv("API_KEY") ?: ""
+}
+
+
+
 

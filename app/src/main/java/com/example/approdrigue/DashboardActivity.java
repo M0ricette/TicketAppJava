@@ -3,7 +3,6 @@ package com.example.approdrigue;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -11,7 +10,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
+import com.example.approdrigue.BuildConfig;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.amplifyframework.auth.options.AuthSignOutOptions;
@@ -20,7 +19,6 @@ import com.amplifyframework.core.Amplify;
 
 import org.json.JSONObject;
 
-import java.nio.charset.StandardCharsets;
 
 /**
  * Activité principale de l’application, affichée après la connexion.
@@ -30,7 +28,7 @@ public class DashboardActivity extends AppCompatActivity {
     private static final String TAG = "Dashboard";
 
     // 🔐 Clé d'API pour les requêtes vers API Gateway
-    private static final String API_KEY = "dP9BkICR991gxbYDfEwgy6sKONdcEKxo2Tw3Uru9";
+    private static final String API_KEY = BuildConfig.API_KEY;
 
     // 🧩 Références aux éléments de l'UI
     private Button btnLogout, btnCheck, btnValidate;
